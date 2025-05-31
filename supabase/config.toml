@@ -1,1 +1,11 @@
+
 project_id = "houpsebfywxdsytqvvqn"
+
+[functions.fetch-news-content]
+verify_jwt = false
+
+[functions.fetch-github-tools]
+verify_jwt = false
+
+[functions.fetch-crypto-data]
+verify_jwt = false

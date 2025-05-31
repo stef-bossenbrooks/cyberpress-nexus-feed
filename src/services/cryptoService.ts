@@ -1,104 +1,26 @@
 
 import { CryptoData, PricePoint, CryptoNews } from '../types/CryptoData';
-import { ApiClient } from './api';
-
-const COINGECKO_BASE_URL = 'https://api.coingecko.com/api/v3';
+import { supabase } from '../integrations/supabase/client';
 
 class CryptoService {
-  private apiClient: ApiClient;
-
-  constructor() {
-    this.apiClient = new ApiClient(COINGECKO_BASE_URL);
-  }
-
   async fetchTopCryptos(limit = 10): Promise<CryptoData[]> {
     try {
-      // Mock data for demo - in production, use real CoinGecko API
-      const mockCryptos: CryptoData[] = [
-        {
-          id: 'bitcoin',
-          symbol: 'BTC',
-          name: 'Bitcoin',
-          price: 67420.50,
-          change24h: 2.4,
-          changeValue24h: 1580.30,
-          marketCap: 1320000000000,
-          volume24h: 28000000000,
-          buyGrade: 'B+',
-          targetPrice: 72000,
-          gradeReasoning: 'Strong institutional adoption with mild overbought signals',
-          lastUpdated: new Date(),
-          priceHistory: this.generateMockPriceHistory(67420.50),
-          indicators: {
-            rsi: 58.2,
-            macd: 'Bullish',
-            ma50: 63840,
-            volume: 'High',
-          },
-          riskAssessment: {
-            volatility: 'Medium',
-            liquidity: 'High',
-            correlation: 'Low',
-          },
-        },
-        {
-          id: 'ethereum',
-          symbol: 'ETH',
-          name: 'Ethereum',
-          price: 3842.15,
-          change24h: 1.8,
-          changeValue24h: 67.82,
-          marketCap: 460000000000,
-          volume24h: 15000000000,
-          buyGrade: 'A-',
-          targetPrice: 4200,
-          gradeReasoning: 'Upcoming ETF approval and staking yield attractiveness',
-          lastUpdated: new Date(),
-          priceHistory: this.generateMockPriceHistory(3842.15),
-          indicators: {
-            rsi: 62.1,
-            macd: 'Bullish',
-            ma50: 3650,
-            volume: 'High',
-          },
-          riskAssessment: {
-            volatility: 'Medium',
-            liquidity: 'High',
-            correlation: 'Medium',
-          },
-        },
-        {
-          id: 'solana',
-          symbol: 'SOL',
-          name: 'Solana',
-          price: 198.44,
-          change24h: 5.2,
-          changeValue24h: 9.84,
-          marketCap: 91000000000,
-          volume24h: 3500000000,
-          buyGrade: 'A',
-          targetPrice: 250,
-          gradeReasoning: 'Ecosystem growth and memecoin activity driving momentum',
-          lastUpdated: new Date(),
-          priceHistory: this.generateMockPriceHistory(198.44),
-          indicators: {
-            rsi: 71.5,
-            macd: 'Bullish',
-            ma50: 185,
-            volume: 'Very High',
-          },
-          riskAssessment: {
-            volatility: 'High',
-            liquidity: 'Medium',
-            correlation: 'Medium',
-          },
-        },
-      ];
+      console.log(`Fetching top ${limit} cryptocurrencies from CoinGecko API`);
+      
+      const { data, error } = await supabase.functions.invoke('fetch-crypto-data', {
+        body: { limit }
+      });
 
-      return mockCryptos.slice(0, limit);
+      if (error) {
+        console.error('Crypto Edge function error:', error);
+        return this.getFallbackCryptos();
+      }
+
+      console.log(`Fetched ${data.length} cryptocurrencies from CoinGecko`);
+      return data || this.getFallbackCryptos();
     } catch (error) {
       console.error('Failed to fetch crypto data:', error);
-      throw error;
+      return this.getFallbackCryptos();
     }
   }
 
@@ -109,7 +31,7 @@ class CryptoService {
 
   async fetchCryptoHistory(id: string, days: number): Promise<PricePoint[]> {
     try {
-      // Mock historical data
+      // This would require additional API calls to get historical data
       return this.generateMockPriceHistory(67420.50, days);
     } catch (error) {
       console.error(`Failed to fetch history for ${id}:`, error);
@@ -118,7 +40,7 @@ class CryptoService {
   }
 
   async fetchCryptoNews(symbol: string): Promise<CryptoNews[]> {
-    // Mock crypto news
+    // Mock crypto news for now
     const mockNews: CryptoNews[] = [
       {
         title: `${symbol} ETF Sees Record Inflow`,
@@ -146,13 +68,45 @@ class CryptoService {
     return mockNews;
   }
 
+  private getFallbackCryptos(): CryptoData[] {
+    // Fallback data if API fails
+    return [
+      {
+        id: 'bitcoin',
+        symbol: 'BTC',
+        name: 'Bitcoin',
+        price: 67420.50,
+        change24h: 2.4,
+        changeValue24h: 1580.30,
+        marketCap: 1320000000000,
+        volume24h: 28000000000,
+        buyGrade: 'B+',
+        targetPrice: 72000,
+        gradeReasoning: 'Strong institutional adoption with mild overbought signals',
+        lastUpdated: new Date(),
+        priceHistory: this.generateMockPriceHistory(67420.50),
+        indicators: {
+          rsi: 58.2,
+          macd: 'Bullish',
+          ma50: 63840,
+          volume: 'High',
+        },
+        riskAssessment: {
+          volatility: 'Medium',
+          liquidity: 'High',
+          correlation: 'Low',
+        },
+      }
+    ];
+  }
+
   private generateMockPriceHistory(currentPrice: number, days = 7): PricePoint[] {
     const points: PricePoint[] = [];
     const now = new Date();
     
     for (let i = days - 1; i >= 0; i--) {
       const timestamp = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-      const variation = (Math.random() - 0.5) * 0.1; // ±5% variation
+      const variation = (Math.random() - 0.5) * 0.1;
       const price = currentPrice * (1 + variation * (i / days));
       
       points.push({
@@ -169,10 +123,10 @@ class CryptoService {
     let score = 0;
     
     // RSI analysis
-    if (crypto.indicators.rsi < 30) score += 20; // Oversold
+    if (crypto.indicators.rsi < 30) score += 20;
     else if (crypto.indicators.rsi < 50) score += 15;
     else if (crypto.indicators.rsi < 70) score += 10;
-    else score += 5; // Overbought
+    else score += 5;
     
     // Price vs MA50
     if (crypto.price > crypto.indicators.ma50 * 1.1) score += 15;

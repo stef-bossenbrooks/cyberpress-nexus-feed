@@ -212,9 +212,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setError('aiNews', null);
       
       try {
+        console.log('Refreshing AI news...');
         const response = await rssService.fetchAITechNews();
         dispatch({ type: 'SET_AI_NEWS', news: response.items });
         setLastUpdated('aiNews');
+        console.log(`Loaded ${response.items.length} AI news items`);
       } catch (error) {
         setError('aiNews', 'Failed to load AI news');
         console.error('AI News refresh error:', error);
@@ -228,9 +230,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setError('startupNews', null);
       
       try {
+        console.log('Refreshing startup news...');
         const response = await rssService.fetchStartupNews();
         dispatch({ type: 'SET_STARTUP_NEWS', news: response.items });
         setLastUpdated('startupNews');
+        console.log(`Loaded ${response.items.length} startup news items`);
       } catch (error) {
         setError('startupNews', 'Failed to load startup news');
         console.error('Startup News refresh error:', error);
@@ -244,9 +248,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setError('cryptoNews', null);
       
       try {
+        console.log('Refreshing crypto news...');
         const response = await rssService.fetchCryptoNews();
         dispatch({ type: 'SET_CRYPTO_NEWS', news: response.items });
         setLastUpdated('cryptoNews');
+        console.log(`Loaded ${response.items.length} crypto news items`);
       } catch (error) {
         setError('cryptoNews', 'Failed to load crypto news');
         console.error('Crypto News refresh error:', error);
@@ -260,6 +266,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setError('aiTools', null);
       
       try {
+        console.log('Refreshing AI tools...');
         const [textGenTools, emergingTools] = await Promise.all([
           githubService.searchAIRepositories('Text Generation'),
           githubService.discoverEmergingTools(),
@@ -271,6 +278,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         });
         dispatch({ type: 'SET_EMERGING_TOOLS', tools: emergingTools });
         setLastUpdated('aiTools');
+        console.log(`Loaded ${textGenTools.length} AI tools and ${emergingTools.length} emerging tools`);
       } catch (error) {
         setError('aiTools', 'Failed to load AI tools');
         console.error('AI Tools refresh error:', error);
@@ -284,9 +292,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setError('cryptoData', null);
       
       try {
-        const cryptos = await cryptoService.fetchTopCryptos(3);
+        console.log('Refreshing crypto data...');
+        const cryptos = await cryptoService.fetchTopCryptos(10);
         dispatch({ type: 'SET_CRYPTO_DATA', data: cryptos });
         setLastUpdated('cryptoData');
+        console.log(`Loaded ${cryptos.length} cryptocurrencies`);
       } catch (error) {
         setError('cryptoData', 'Failed to load crypto data');
         console.error('Crypto Data refresh error:', error);
@@ -300,7 +310,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setError('creativeContent', null);
       
       try {
-        // Mock creative content for now
+        console.log('Refreshing creative content...');
+        // Mock creative content for now - could be enhanced with Perplexity
         const mockContent: CreativeContent[] = [
           {
             id: 'creative-1',
@@ -323,6 +334,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         
         dispatch({ type: 'SET_CREATIVE_CONTENT', content: mockContent });
         setLastUpdated('creativeContent');
+        console.log(`Loaded ${mockContent.length} creative content items`);
       } catch (error) {
         setError('creativeContent', 'Failed to load creative content');
         console.error('Creative Content refresh error:', error);
@@ -332,6 +344,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     },
 
     async refreshAllContent() {
+      console.log('Starting complete content refresh...');
       await Promise.all([
         actions.refreshAINews(),
         actions.refreshStartupNews(),
@@ -340,6 +353,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         actions.refreshCryptoData(),
         actions.refreshCreativeContent(),
       ]);
+      console.log('Complete content refresh finished');
     },
 
     saveItem(item: SavedItem) {
@@ -364,6 +378,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Initial data load and scheduler setup
   useEffect(() => {
+    console.log('Initializing CyberPress with real API data...');
     // Load initial content
     actions.refreshAllContent();
     
