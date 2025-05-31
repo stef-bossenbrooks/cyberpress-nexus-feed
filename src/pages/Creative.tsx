@@ -65,7 +65,13 @@ const Creative = () => {
     }
   ];
 
-  const QuoteCard = ({ content, author, category }: { content: string; author: string; category: string }) => (
+  interface QuoteCardProps {
+    content: string;
+    author: string;
+    category: string;
+  }
+
+  const QuoteCard: React.FC<QuoteCardProps> = ({ content, author, category }) => (
     <div className="cyber-card p-8 rounded-lg hover:cyber-glow-purple transition-all duration-300 flex flex-col justify-center text-center">
       <div className="mb-4">
         <span className="text-xs font-inter font-medium px-2 py-1 bg-purple-400/20 text-purple-400 rounded-full">
@@ -82,7 +88,15 @@ const Creative = () => {
     </div>
   );
 
-  const ImageCard = ({ title, description, imageUrl, source, category }: any) => (
+  interface ImageCardProps {
+    title: string;
+    description: string;
+    imageUrl: string;
+    source: string;
+    category: string;
+  }
+
+  const ImageCard: React.FC<ImageCardProps> = ({ title, description, imageUrl, source, category }) => (
     <div className="cyber-card rounded-lg overflow-hidden hover:cyber-glow transition-all duration-300 group">
       <div className="relative">
         <img 
@@ -119,7 +133,14 @@ const Creative = () => {
     </div>
   );
 
-  const ConceptCard = ({ title, description, category, tags }: any) => (
+  interface ConceptCardProps {
+    title: string;
+    description: string;
+    category: string;
+    tags: string[];
+  }
+
+  const ConceptCard: React.FC<ConceptCardProps> = ({ title, description, category, tags }) => (
     <div className="cyber-card p-6 rounded-lg hover:cyber-glow-pink transition-all duration-300">
       <div className="flex items-center justify-between mb-4">
         <span className="px-2 py-1 text-xs font-inter font-medium bg-pink-400/20 text-pink-400 rounded-full">
@@ -170,11 +191,11 @@ const Creative = () => {
         <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 gap-6 space-y-6">
           {inspirationContent.map((item, index) => {
             if (item.type === 'quote') {
-              return <QuoteCard key={index} {...item} />;
+              return <QuoteCard key={index} content={item.content} author={item.author} category={item.category} />;
             } else if (item.type === 'image') {
-              return <ImageCard key={index} {...item} />;
+              return <ImageCard key={index} title={item.title} description={item.description} imageUrl={item.imageUrl} source={item.source} category={item.category} />;
             } else if (item.type === 'concept') {
-              return <ConceptCard key={index} {...item} />;
+              return <ConceptCard key={index} title={item.title} description={item.description} category={item.category} tags={item.tags} />;
             }
             return null;
           })}
