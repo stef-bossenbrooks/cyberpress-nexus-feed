@@ -3,9 +3,12 @@ import React from 'react';
 import SectionHeader from '../components/SectionHeader';
 import ContentCard from '../components/ContentCard';
 import { Link } from 'react-router-dom';
-import { TrendingUp, Zap, Bookmark } from 'lucide-react';
+import { TrendingUp, Zap, Bookmark, RefreshCw } from 'lucide-react';
+import { useApp } from '../contexts/AppContext';
 
 const Home = () => {
+  const { state, actions } = useApp();
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good Morning';
@@ -13,44 +16,35 @@ const Home = () => {
     return 'Good Evening';
   };
 
-  const featuredContent = [
-    {
-      title: "GPT-4 Turbo Achieves New Benchmarks in Code Generation",
-      summary: "OpenAI's latest model shows significant improvements in programming tasks, outperforming previous versions by 23% in coding accuracy.",
-      source: "MIT Technology Review",
-      timeAgo: "2 hours ago",
-      readTime: "4 min read",
-      imageUrl: "photo-1488590528505-98d2b5aba04b",
-      category: "AI News",
-      url: "https://example.com"
-    },
-    {
-      title: "Anthropic Raises $4B Series C, Valuation Reaches $18.4B",
-      summary: "The AI safety company secures massive funding round led by Google and Spark Capital, positioning for next-generation AI development.",
-      source: "TechCrunch",
-      timeAgo: "4 hours ago",
-      readTime: "3 min read",
-      imageUrl: "photo-1518770660439-4636190af475",
-      category: "Startup",
-      url: "https://example.com"
-    },
-    {
-      title: "The Art of Minimalist AI Interface Design",
-      summary: "Exploring how leading AI companies are embracing clean, focused design principles to enhance user experience and reduce cognitive load.",
-      source: "Design Weekly",
-      timeAgo: "6 hours ago",
-      readTime: "7 min read",
-      imageUrl: "photo-1526374965328-7f61d4dc18c5",
-      category: "Creative",
-      url: "https://example.com"
-    }
-  ];
+  // Combine all news for featured content
+  const allNews = [
+    ...state.aiNews,
+    ...state.startupNews,
+    ...state.cryptoNews
+  ].sort(() => Math.random() - 0.5).slice(0, 6);
 
   const quickStats = [
-    { label: 'Bitcoin', value: '$67,420', change: '+2.4%', positive: true },
-    { label: 'Ethereum', value: '$3,842', change: '+1.8%', positive: true },
-    { label: 'Top AI Tool', value: 'Claude 3.5', change: 'A+ Grade', positive: true },
+    { 
+      label: 'Bitcoin', 
+      value: state.cryptoData.length > 0 ? `$${state.cryptoData[0]?.price?.toLocaleString() || '0'}` : '$--,---',
+      change: state.cryptoData.length > 0 ? `${state.cryptoData[0]?.change24h >= 0 ? '+' : ''}${state.cryptoData[0]?.change24h?.toFixed(1) || '0'}%` : '--%',
+      positive: state.cryptoData.length > 0 ? state.cryptoData[0]?.change24h >= 0 : true 
+    },
+    { 
+      label: 'Ethereum', 
+      value: state.cryptoData.length > 1 ? `$${state.cryptoData[1]?.price?.toLocaleString() || '0'}` : '$--,---',
+      change: state.cryptoData.length > 1 ? `${state.cryptoData[1]?.change24h >= 0 ? '+' : ''}${state.cryptoData[1]?.change24h?.toFixed(1) || '0'}%` : '--%',
+      positive: state.cryptoData.length > 1 ? state.cryptoData[1]?.change24h >= 0 : true 
+    },
+    { 
+      label: 'Top AI Tool', 
+      value: Object.values(state.aiTools).flat()[0]?.name || 'Loading...',
+      change: Object.values(state.aiTools).flat()[0]?.grades?.['Community'] || 'A+',
+      positive: true 
+    },
   ];
+
+  const isLoading = state.loading.aiNews || state.loading.startupNews || state.loading.cryptoNews;
 
   return (
     <div className="min-h-screen bg-background md:ml-64">
@@ -110,14 +104,50 @@ const Home = () => {
 
         {/* Featured Content */}
         <div className="mb-8">
-          <h2 className="text-2xl font-playfair font-semibold text-white mb-6">
-            Today's Featured Stories
-          </h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            {featuredContent.map((content, index) => (
-              <ContentCard key={index} {...content} />
-            ))}
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-playfair font-semibold text-white">
+              Today's Featured Stories
+            </h2>
+            <button
+              onClick={() => actions.refreshAllContent()}
+              disabled={isLoading}
+              className="flex items-center space-x-2 px-4 py-2 bg-cyan-400/10 text-cyan-400 rounded-lg hover:bg-cyan-400/20 transition-colors duration-300 cyber-border disabled:opacity-50"
+            >
+              <RefreshCw className={`${isLoading ? 'animate-spin' : ''}`} size={16} />
+              <span className="font-inter font-medium">Refresh</span>
+            </button>
           </div>
+
+          {isLoading ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <div key={index} className="cyber-card p-6 rounded-lg animate-pulse">
+                  <div className="h-4 bg-gray-700 rounded mb-4"></div>
+                  <div className="h-6 bg-gray-700 rounded mb-2"></div>
+                  <div className="h-4 bg-gray-700 rounded mb-4"></div>
+                  <div className="h-3 bg-gray-700 rounded w-1/2"></div>
+                </div>
+              ))}
+            </div>
+          ) : allNews.length > 0 ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+              {allNews.map((content, index) => (
+                <ContentCard key={content.id || index} {...content} />
+              ))}
+            </div>
+          ) : (
+            <div className="cyber-card p-8 rounded-lg text-center">
+              <p className="text-gray-400 font-inter mb-4">
+                No featured stories available right now. Try refreshing to load the latest content.
+              </p>
+              <button
+                onClick={() => actions.refreshAllContent()}
+                className="px-6 py-2 bg-cyan-400/10 text-cyan-400 rounded-lg hover:bg-cyan-400/20 transition-colors duration-300 cyber-border font-inter font-medium"
+              >
+                Refresh Content
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Live Feed Status */}
@@ -128,13 +158,13 @@ const Home = () => {
                 Feed Status
               </h3>
               <p className="text-gray-400 font-inter">
-                All content sources are online and actively monitored
+                {isLoading ? 'Updating content sources...' : 'All content sources are online and actively monitored'}
               </p>
             </div>
             <div className="flex space-x-2">
-              <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-              <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse" style={{animationDelay: '0.5s'}}></div>
-              <div className="w-3 h-3 bg-purple-400 rounded-full animate-pulse" style={{animationDelay: '1s'}}></div>
+              <div className={`w-3 h-3 rounded-full ${state.errors.aiNews ? 'bg-red-400' : 'bg-green-400 animate-pulse'}`}></div>
+              <div className={`w-3 h-3 rounded-full ${state.errors.cryptoData ? 'bg-red-400' : 'bg-cyan-400 animate-pulse'}`} style={{animationDelay: '0.5s'}}></div>
+              <div className={`w-3 h-3 rounded-full ${state.errors.startupNews ? 'bg-red-400' : 'bg-purple-400 animate-pulse'}`} style={{animationDelay: '1s'}}></div>
             </div>
           </div>
         </div>
