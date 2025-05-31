@@ -96,8 +96,20 @@ serve(async (req) => {
     
     let newsData;
     try {
+      // Extract JSON from markdown code blocks if present
+      let jsonContent = content;
+      
+      // Check if content is wrapped in markdown code blocks
+      const jsonBlockRegex = /```json\s*([\s\S]*?)\s*```/;
+      const jsonMatch = content.match(jsonBlockRegex);
+      
+      if (jsonMatch) {
+        jsonContent = jsonMatch[1];
+        console.log('Extracted JSON from markdown blocks:', jsonContent);
+      }
+      
       // Try to parse the JSON response
-      newsData = JSON.parse(content);
+      newsData = JSON.parse(jsonContent);
     } catch (parseError) {
       console.error('Failed to parse JSON from Perplexity response:', parseError);
       console.log('Content that failed to parse:', content);
