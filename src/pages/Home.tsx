@@ -16,12 +16,33 @@ const Home = () => {
     return 'Good Evening';
   };
 
-  // Combine all news for featured content
+  const calculateTimeAgo = (publishedAt: Date): string => {
+    const now = new Date();
+    const published = new Date(publishedAt);
+    const diffInMs = now.getTime() - published.getTime();
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return 'Just now';
+    if (diffInHours < 24) return `${diffInHours} hours ago`;
+    
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 7) return `${diffInDays} days ago`;
+    
+    return `${Math.floor(diffInDays / 7)} weeks ago`;
+  };
+
+  // Combine all news for featured content and add timeAgo property
   const allNews = [
     ...state.aiNews,
     ...state.startupNews,
     ...state.cryptoNews
-  ].sort(() => Math.random() - 0.5).slice(0, 6);
+  ]
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 6)
+    .map(item => ({
+      ...item,
+      timeAgo: calculateTimeAgo(item.publishedAt)
+    }));
 
   const quickStats = [
     { 
